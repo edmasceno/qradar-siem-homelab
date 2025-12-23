@@ -25,10 +25,10 @@ A instalação inicial foi executada em um snapshot limpo do CentOS. O primeiro 
 
 **Ação:** Forçado o uso de `hmac-sha1` para estabelecer a gestão via terminal.
 
-![Instalação do CentOS](img/01_centos_setup.png)
+![Instalação do CentOS](01_centos_setup.png)
 *Figura 1: Processo de atualização de pacotes e setup do sistema base.*
 
-![Interface Inicial QRadar](img/02_qradar_interface.png)
+![Interface Inicial QRadar](02_qradar_interface.png)
 *Figura 2: Primeiro acesso à interface administrativa após a configuração de credenciais.*
 
 ---
@@ -40,13 +40,13 @@ Apesar do serviço de coleta `ecs-ec-ingress` estar listado como ativo, a porta 
 
 **Solução:** Como a licença do snapshot expirou em 2025, executei um "Time Travel" no servidor, ajustando o relógio para **maio de 2020** e desativando o NTP.
 
-![Status do Serviço](img/04_service_status.png)
+![Status do Serviço](04_service_status.png)
 *Figura 3: Verificação do status do coletor de eventos e logs de inicialização.*
 
 ### 2. Monitoramento de Performance
 O QRadar demanda um alto consumo de hardware. Com o comando `top`, pude identificar a carga dos processos Java e a necessidade de esperar a estabilização do sistema após a implementação da licença.
 
-![Monitoramento de Recursos](img/05_resource_monitoring.png)
+![Monitoramento de Recursos](05_resource_monitoring.png)
 *Figura 4: Análise de consumo de CPU e Memória via terminal.*
 
 ---
@@ -59,7 +59,7 @@ Para este laboratório, decidi não empregar agentes (WinCollect/NXLog). Criei u
 ### Validação com TCPDump
 Para identificar problemas de firewall entre host e guest, usei o `tcpdump` no QRadar para verificar se os pacotes chegavam à interface de rede.
 
-![Captura de Pacotes](img/06_tcpdump_verification.png)
+![Captura de Pacotes](06_tcpdump_verification.png)
 *Figura 6: Confirmação visual de tráfego UDP/514 chegando ao SIEM.*
 
 ---
@@ -67,7 +67,7 @@ Para identificar problemas de firewall entre host e guest, usei o `tcpdump` no Q
 ## ✅ Resultado Final
 Com a infraestrutura estabilizada e a licença reativada por meio do ajuste temporal, os registros do Windows começaram a ser normalizados e apresentados em tempo real.
 
-![Atividade do Log Final](img/07_final_log_activity.png)
+![Atividade do Log Final](07_final_log_activity.png)
 *Figura 7: Aba Log Activity processando eventos com sucesso após o troubleshooting.*
 
 ---
