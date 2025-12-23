@@ -77,3 +77,6 @@ Com a infraestrutura estabilizada e a licença reativada por meio do ajuste temp
 * **Administração Linux:** Gestão de serviços, logs de sistema e manipulação de tempo/NTP.
 * **Segurança de Rede:** Diagnóstico de protocolos com `tcpdump` e troubleshooting de SSH.
 * **Engenharia de Logs:** Simulação de tráfego Syslog sem agentes e mapeamento de Log Sources.
+  
+  ---
+*Projeto de estudo em Blue Team.*
