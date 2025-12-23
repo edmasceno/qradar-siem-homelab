@@ -25,10 +25,10 @@ A instalação inicial foi executada em um snapshot limpo do CentOS. O primeiro 
 
 **Ação:** Forçado o uso de `hmac-sha1` para estabelecer a gestão via terminal.
 
-![Instalação do CentOS](img/01_centos_setup.jpg)
+![Instalação do CentOS](img/01_centos_setup.png)
 *Figura 1: Processo de atualização de pacotes e setup do sistema base.*
 
-![Interface Inicial QRadar](img/02_qradar_interface.jpg)
+![Interface Inicial QRadar](img/02_qradar_interface.png)
 *Figura 2: Primeiro acesso à interface administrativa após a configuração de credenciais.*
 
 ---
