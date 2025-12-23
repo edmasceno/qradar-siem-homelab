@@ -41,6 +41,7 @@ Apesar do serviço de coleta `ecs-ec-ingress` estar listado como ativo, a porta 
 **Solução:** Como a licença do snapshot expirou em 2025, executei um "Time Travel" no servidor, ajustando o relógio para **maio de 2020** e desativando o NTP.
 
 ![Status do Serviço](04_service_status.png)
+
 *Figura 3: Verificação do status do coletor de eventos e logs de inicialização.*
 
 ### 2. Monitoramento de Performance
