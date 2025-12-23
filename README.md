@@ -80,3 +80,5 @@ Com a infraestrutura estabilizada e a licença reativada por meio do ajuste temp
   
   ---
 *Projeto de estudo em Blue Team.*
+
+Obs: Ainda não concluído 100%
