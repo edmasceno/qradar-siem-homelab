@@ -119,4 +119,6 @@ Com a infraestrutura recuperada e os logs devidamente normalizados, os eventos p
 ## 📚 Conclusão
 Este laboratório demonstra que a atuação em um SOC vai além do simples monitoramento de painéis. O domínio de infraestrutura, banco de dados e rede é essencial para garantir visibilidade, confiabilidade operacional e resposta eficaz a incidentes.
 
+---
+
 *Projeto de estudo em Blue Team Operations.*
