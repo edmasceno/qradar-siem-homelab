@@ -1,65 +1,120 @@
 # 🛡️ QRadar SIEM Lab: Deployment & Advanced Troubleshooting
 
 ## 🎯 Visão Geral
-Este repositório registra a criação de um sistema de monitoramento centralizado utilizando o **IBM QRadar Community Edition**. O projeto reproduz o ciclo de vida integral de um log em um SOC (Centro de Operações de Segurança), desde a ingestão bruta até a normalização e inteligência de dados.
+Este repositório registra a configuração de um ambiente de monitoramento utilizando o **IBM QRadar Community Edition**. O foco principal foi a resolução de questões críticas de infraestrutura, como a expiração de licenças em snapshots antigos, recuperação de serviços de banco de dados e ingestão de logs usando o PowerShell.
 
 ## 🧐 O que é o IBM QRadar?
-O QRadar é uma plataforma de ponta em **SIEM (Security Information and Event Management)**, funcionando como o sistema nervoso central de um SOC. Ele executa a coleta, correlação e análise de eventos em tempo real para identificar ameaças e garantir conformidade operacional.
+O **IBM QRadar** é uma das principais plataformas de SIEM (Gerenciamento e Análise de Eventos de Segurança) no mercado mundial. Sua função é atuar como o "cérebro" de um SOC (Centro de Operações de Segurança), reunindo, correlacionando e analisando milhões de eventos produzidos por dispositivos de rede, servidores e aplicativos em tempo real.
+
+## 💻 Ambiente do laboratório
+* **SIEM:** Edição Comunitária do IBM QRadar v7.3.3 (CentOS 7).
+* **Rede:** VM em modo Bridge (IP: `192.168.1.47`).
+* **Endpoints:** Enviar eventos por meio de Syslog/UDP em Windows 11.
 
 ---
 
-## 💻 Arquitetura do Laboratório
-* **SIEM:** IBM QRadar Community Edition v7.3.3 (CentOS 7).
-* **Coletor:** Mecanismo Ariel (Event & Flow Processor).
-* **Endpoints:** Host Windows (IP: `192.168.1.42`) enviando telemetria via PowerShell.
-* **Infraestrutura:** Ambiente virtualizado com gestão via CLI (SSH).
+## 🛠️ Etapa 1: Implementação e Acesso
+A instalação inicial foi realizada em um snapshot limpo do CentOS. O primeiro desafio surgiu ao tentar acessar o sistema remoto via SSH, quando o Windows 11 recusou a conexão por não ser compatível com os algoritmos legados (MACs).
+
+**Ação:** **Forçando** o uso de `hmac-sha1` para configurar a gestão por meio do terminal.
+
+![Processo de atualização](assets/01_centos_setup.png)
+*Figura 1: Processo de atualização de pacotes e setup do sistema base.*
+
+![Login SSH e Terminal](assets/11_monitoramento_syslog_ssh.png)
+*Figura 2: Resolução de problemas de MACs SSH e monitoramento inicial via CLI.*
+
+![Interface QRadar](assets/02_qradar_interface.png)
+*Figura 3: Primeiro acesso à interface administrativa após a configuração de credenciais.*
 
 ---
 
-## ✅ Pilar 1: Visibilidade de Rede (Data Ingestion)
-O primeiro desafio de um Analista de SOC é assegurar que os ativos essenciais não tenham "pontos cegos".
+## 🔍 Etapa 2: Resolução de problemas de infraestrutura (Virtualização)
+Antes de estabilizar o SIEM, enfrentei problemas na camada de virtualização que impediam a operação da máquina.
 
-* **Ingestão via Syslog:** Implementei a coleta de logs *agentless* (sem agentes) utilizando o protocolo UDP/514.
-* **Validação de Conectividade:** Empreguei o `tcpdump` para confirmar a recepção de pacotes na interface de rede do SIEM, assegurando a integridade do fluxo entre o endpoint e o coletor.
+* **O Erro MachineWrap:** Um erro grave de interface (E_FAIL) no VirtualBox impediu a anexação adequada do disco VDI.
+* **A Solução:** Para restaurar a integridade do boot, foi preciso ajustar as controladoras SATA e IDE nas configurações de armazenamento.
 
-![Captura de Pacotes](assets/06_tcpdump_verification.png)
-*Evidência: Validação do tráfego UDP/514 por meio da CLI e recebimento de registros em tempo real.*
+![Erro de Virtualização](assets/12_erro_virtualbox_vdi.png)
+*Figura 4: Diagnóstico de falha crítica na anexação do disco rígido virtual.*
 
----
-
-## ✅ Pilar 2: Correlação de Eventos (Standardization)
-Dados brutos sem contexto são apenas ruído. A **Engenharia de Logs** foi o foco desta etapa.
-
-* **Normalização (Parsing):** Utilize o **DSM Editor** para tratar eventos não identificados ("Unknown"). Mapeei mensagens personalizadas para a taxonomia estruturada do QRadar.
-* **Mapeamento de QID:** Para o evento `host_Script`, criei o identificador exclusivo `11750001`, possibilitando ao sistema agrupar e contabilizar ações específicas de scripts administrativos em Dashboards de severidade.
-
-![DSM Editor Mapping](assets/10_mapeamento_qid_custom.png)
-*Evidência: Processo de mapeamento de QID para converter logs "Unknown" em alertas acionáveis.*
+![Configuração de Armazenamento](assets/13_configuracao_armazenamento.png)
+*Figura 5: Reconfiguração das controladoras para recuperação da VM.*
 
 ---
 
-## ✅ Pilar 3: Resposta a Incidentes (Troubleshooting & RCA)
-A resiliência operacional é essencial. Registrei falhas críticas e conduzi a análise de causa raiz (RCA).
+## 🔍 Etapa 3: Diagnóstico de Serviços e Licença (Causa Raiz)
 
-* **Gestão de Licenciamento:** Corrigi o problema de expiração de licença (`Waiting for valid license`) através de ajustes no relógio do sistema e desativação do serviço NTP, permitindo a restauração do serviço de ingestão `ecs-ec-ingress`.
-* **Integridade do Banco de Dados:** Resolvi problemas de conexão no servidor de consultas Ariel, empregando comandos `psql` e análise de processos com `ps aux` para restabelecer o serviço de buscas do SIEM.
-* **Gestão de Recursos:** Acompanhei o consumo de memória e CPU via `top`, otimizando a estabilidade dos processos Java da plataforma.
+### 1. A restrição da licença ("Time Travel")
+Embora o serviço de coleta `ecs-ec-ingress` estivesse em funcionamento, a porta 514 permanecia fechada. A análise dos registros apontou que a licença havia expirado.
 
-![Troubleshooting Ariel](assets/17_investigacao_db_psql.png)
-*Evidência: Análise técnica na camada de banco de dados (Ariel Query Server).*
+**Solução:** Realizei um "Time Travel" no servidor, configurando o relógio para **maio de 2020** e desativando o NTP para verificar a licença.
 
----
+![Status do Coletor](assets/04_service_status.png)
+*Figura 6: Verificação do status do coletor de eventos e porta 514.*
 
-## 🛠️ Tecnologias e Comandos Utilizados
-* **Análise de Rede:** `tcpdump -i any port 514`.
-* **Gestão de Serviços:** `systemctl status ecs-ec-ingress`.
-* **Automação de Logs:** Script PowerShell para simulação de eventos Syslog RFC-3164.
-* **Debug de Sistema:** `journalctl -u ariel_query_server`.
+### 2. Monitoramento de Performance
+Utilizei o comando `top` para monitorar a carga dos processos Java e a estabilização do sistema.
+
+![Monitoramento Top](assets/05_resource_monitoring.png)
+*Figura 7: Análise de consumo de hardware em tempo real.*
 
 ---
 
-## 📚 Conclusão e Aprendizados
-Este laboratório provou que a atuação em Cybersecurity vai além da ferramenta. Para garantir a integridade do monitoramento, foi necessário dominar administração Linux, protocolos de rede e engenharia de dados. A habilidade de converter falhas de infraestrutura em oportunidades para diagnóstico técnico é o que caracteriza a maturidade de um Analista de SOC.
+## 🚨 Etapa 4: Recuperação Crítica (Ariel e Banco de Dados)
+Hoje, encontrei um problema que impedia a visualização de logs: erro de conexão com o servidor de consulta.
+
+* **Diagnóstico de Falha:** Utilizando o `journalctl`, constatei que o serviço `ariel_query_server` não conseguiu iniciar.
+* **Intervenção Manual:** Utilizei o `psql` para acessar o banco de dados e investigar as tabelas de sistema, além de analisar processos órfãos com o comando `ps aux | grep ariel`, a fim de forçar a restauração do serviço.
+
+![Erro de Servidor de Consulta](assets/14_erro_servidor_consulta.png)
+*Figura 8: Interface do QRadar exibindo falha no servidor de busca Ariel.*
+
+![Log do Journalctl](assets/16_falha_servico_ariel_query.png)
+*Figura 9: Análise de logs do sistema identificando a causa da falha do serviço.*
+
+![Investigação PSQL](assets/17_investigacao_db_psql.png)
+*Figura 10: Troubleshooting avançado via terminal investigando a base de dados Ariel.*
 
 ---
+
+## 📡 Etapa 5: Coleta e Engenharia de Logs (Editor DSM)
+
+### Aquisição por meio do PowerShell
+Desenvolvi um script PowerShell para converter eventos locais em mensagens Syslog e enviá-las pelo protocolo UDP na porta 514. Utilizei o `tcpdump` e o monitoramento por SSH para validar o tráfego.
+
+![Script PowerShell](assets/03_powershell_sender.png)
+*Figura 11: Implementação do script para envio de telemetria customizada.*
+
+![Captura TCPDump](assets/06_tcpdump_verification.png)
+*Figura 12: Confirmação visual de tráfego UDP/514 chegando ao SIEM.*
+
+### Normalização e Mapeamento de QID
+Logs "Unknown" foram padronizados. Empreguei o **DSM Editor** para desenvolver o **QID 11750001**, o que possibilitou o reconhecimento e a classificação adequada do evento `host_Script`.
+
+![Filtro de Origem](assets/9_filtro_log_source.png)
+*Figura 13: Aplicação de filtro de busca para isolar a nova fonte de log.*
+
+![Mapeamento DSM](assets/10_mapeamento_qid_custom.png)
+*Figura 14: Engenharia de logs convertendo dados desconhecidos em eventos acionáveis.*
+
+---
+
+## ✅ Resultado Final e Painéis de Controle
+Após a recuperação da infraestrutura e normalização dos logs, os eventos começaram a ser apresentados e reunidos em painéis de controle de monitoramento.
+
+![Log Activity Real Time](assets/18.png)
+*Figura 15: Visualização dos registros processados em tempo real na aba Log Activity com filtro aplicado.*
+
+![Recepção com Sucesso](assets/08_recepcao_log_sucesso.png)
+*Figura 16: Confirmação da normalização do evento customizado.*
+
+![Saúde do Sistema](assets/07_final_log_activity.png)
+*Figura 17: Aba Log Activity processando métricas de saúde e eventos com sucesso.*
+
+---
+
+## 📚 Conclusão
+Este laboratório demonstrou que a atuação em SOC vai além de monitorar painéis; é imprescindível ter domínio sobre a infraestrutura, banco de dados e rede para assegurar uma visibilidade completa.
+
 *Projeto de estudo em Blue Team Operations.*
