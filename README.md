@@ -1,84 +1,65 @@
-# QRadar SIEM Lab: Deployment & Advanced Troubleshooting
+# 🛡️ QRadar SIEM Lab: Deployment & Advanced Troubleshooting
 
 ## 🎯 Visão Geral
-Este projeto registra a criação de um ambiente de monitoramento com o uso do **IBM QRadar Community Edition**. O foco principal foi a solução de problemas críticos de infraestrutura, como expiração de licenças em snapshots antigos e ingestão de logs por meio do PowerShell.
+Este repositório registra a criação de um sistema de monitoramento centralizado utilizando o **IBM QRadar Community Edition**. O projeto reproduz o ciclo de vida integral de um log em um SOC (Centro de Operações de Segurança), desde a ingestão bruta até a normalização e inteligência de dados.
 
 ## 🧐 O que é o IBM QRadar?
-O **IBM QRadar** é uma das principais plataformas de **SIEM (Gerenciamento e Análise de Eventos de Segurança)** no mercado global. Sua função é servir como o "cérebro" de um SOC (Centro de Operações de Segurança), centralizando, correlacionando e analisando milhões de eventos gerados por dispositivos de rede, servidores e aplicativos em tempo real.
+O QRadar é uma plataforma de ponta em **SIEM (Security Information and Event Management)**, funcionando como o sistema nervoso central de um SOC. Ele executa a coleta, correlação e análise de eventos em tempo real para identificar ameaças e garantir conformidade operacional.
 
-**Funções principais analisadas neste laboratório:**
-* **Log Activity:** Coleta e padronização de eventos para reconhecimento de padrões de comportamento.
-* **Monitoramento em tempo real:** Visualização de fluxos de dados no momento em que acontecem.
-* **Event Processing:** Administração de serviços internos de ingestão, como o `ecs-ec-ingress`.
+---
 
-A versão **Community Edition** utilizada é uma instância gratuita destinada a permitir que profissionais de segurança realizem diagnósticos e engenharia de detecção em ambientes controlados.
-
-## 💻 Ambiente do Laboratório
+## 💻 Arquitetura do Laboratório
 * **SIEM:** IBM QRadar Community Edition v7.3.3 (CentOS 7).
-* **Network:** VM em modo Bridge (IP: `192.168.1.47`).
-* **Endpoints:** Host Windows 11 enviando eventos via Syslog/UDP.
+* **Coletor:** Mecanismo Ariel (Event & Flow Processor).
+* **Endpoints:** Host Windows (IP: `192.168.1.42`) enviando telemetria via PowerShell.
+* **Infraestrutura:** Ambiente virtualizado com gestão via CLI (SSH).
 
 ---
 
-## 🛠️ Fase 1: Implementação e Acesso
-A instalação inicial foi executada em um snapshot limpo do CentOS. O primeiro obstáculo apareceu ao tentar acessar remotamente via SSH, quando o Windows 11 negou a conexão devido à incompatibilidade com algoritmos legados (MACs).
+## ✅ Pilar 1: Visibilidade de Rede (Data Ingestion)
+O primeiro desafio de um Analista de SOC é assegurar que os ativos essenciais não tenham "pontos cegos".
 
-**Ação:** Forçado o uso de `hmac-sha1` para estabelecer a gestão via terminal.
+* **Ingestão via Syslog:** Implementei a coleta de logs *agentless* (sem agentes) utilizando o protocolo UDP/514.
+* **Validação de Conectividade:** Empreguei o `tcpdump` para confirmar a recepção de pacotes na interface de rede do SIEM, assegurando a integridade do fluxo entre o endpoint e o coletor.
 
-![Instalação do CentOS](01_centos_setup.png)
-*Figura 1: Processo de atualização de pacotes e setup do sistema base.*
-
-![Interface Inicial QRadar](02_qradar_interface.png)
-*Figura 2: Primeiro acesso à interface administrativa após a configuração de credenciais.*
+![Captura de Pacotes](assets/06_tcpdump_verification.png)
+*Evidência: Validação do tráfego UDP/514 por meio da CLI e recebimento de registros em tempo real.*
 
 ---
 
-## 🔍 Fase 2: Troubleshooting e Diagnóstico (Causa Raiz)
+## ✅ Pilar 2: Correlação de Eventos (Standardization)
+Dados brutos sem contexto são apenas ruído. A **Engenharia de Logs** foi o foco desta etapa.
 
-### 1. O Bloqueio da Licença ("Time Travel")
-Apesar do serviço de coleta `ecs-ec-ingress` estar listado como ativo, a porta 514 continuava fechada para recebimentos. A análise dos registros em `/var/log/qradar.log` indicou o erro: `Waiting for valid license...`.
+* **Normalização (Parsing):** Utilize o **DSM Editor** para tratar eventos não identificados ("Unknown"). Mapeei mensagens personalizadas para a taxonomia estruturada do QRadar.
+* **Mapeamento de QID:** Para o evento `host_Script`, criei o identificador exclusivo `11750001`, possibilitando ao sistema agrupar e contabilizar ações específicas de scripts administrativos em Dashboards de severidade.
 
-**Solução:** Como a licença do snapshot expirou em 2025, executei um "Time Travel" no servidor, ajustando o relógio para **maio de 2020** e desativando o NTP.
-
-![Status do Serviço](04_service_status.png)
-
-*Figura 3: Verificação do status do coletor de eventos e logs de inicialização.*
-
-### 2. Monitoramento de Performance
-O QRadar demanda um alto consumo de hardware. Com o comando `top`, pude identificar a carga dos processos Java e a necessidade de esperar a estabilização do sistema após a implementação da licença.
-
-![Monitoramento de Recursos](05_resource_monitoring.png)
-*Figura 4: Análise de consumo de CPU e Memória via terminal.*
+![DSM Editor Mapping](assets/10_mapeamento_qid_custom.png)
+*Evidência: Processo de mapeamento de QID para converter logs "Unknown" em alertas acionáveis.*
 
 ---
 
-## 📡 Fase 3: Ingestão de Logs e Validação de Rede
+## ✅ Pilar 3: Resposta a Incidentes (Troubleshooting & RCA)
+A resiliência operacional é essencial. Registrei falhas críticas e conduzi a análise de causa raiz (RCA).
 
-### Envio Direto via PowerShell
-Para este laboratório, decidi não empregar agentes (WinCollect/NXLog). Criei um script PowerShell para transformar eventos locais em mensagens Syslog RFC-3164 e transmiti-los pelo protocolo UDP na porta 514.
+* **Gestão de Licenciamento:** Corrigi o problema de expiração de licença (`Waiting for valid license`) através de ajustes no relógio do sistema e desativação do serviço NTP, permitindo a restauração do serviço de ingestão `ecs-ec-ingress`.
+* **Integridade do Banco de Dados:** Resolvi problemas de conexão no servidor de consultas Ariel, empregando comandos `psql` e análise de processos com `ps aux` para restabelecer o serviço de buscas do SIEM.
+* **Gestão de Recursos:** Acompanhei o consumo de memória e CPU via `top`, otimizando a estabilidade dos processos Java da plataforma.
 
-### Validação com TCPDump
-Para identificar problemas de firewall entre host e guest, usei o `tcpdump` no QRadar para verificar se os pacotes chegavam à interface de rede.
-
-![Captura de Pacotes](06_tcpdump_verification.png)
-*Figura 6: Confirmação visual de tráfego UDP/514 chegando ao SIEM.*
-
----
-
-## ✅ Resultado Final
-Com a infraestrutura estabilizada e a licença reativada por meio do ajuste temporal, os registros do Windows começaram a ser normalizados e apresentados em tempo real.
-
-![Atividade do Log Final](07_final_log_activity.png)
-*Figura 7: Aba Log Activity processando eventos com sucesso após o troubleshooting.*
+![Troubleshooting Ariel](assets/17_investigacao_db_psql.png)
+*Evidência: Análise técnica na camada de banco de dados (Ariel Query Server).*
 
 ---
 
-## 📚 Principais Aprendizados
-* **Administração Linux:** Gestão de serviços, logs de sistema e manipulação de tempo/NTP.
-* **Segurança de Rede:** Diagnóstico de protocolos com `tcpdump` e troubleshooting de SSH.
-* **Engenharia de Logs:** Simulação de tráfego Syslog sem agentes e mapeamento de Log Sources.
-  
-  ---
-*Projeto de estudo em Blue Team.*
+## 🛠️ Tecnologias e Comandos Utilizados
+* **Análise de Rede:** `tcpdump -i any port 514`.
+* **Gestão de Serviços:** `systemctl status ecs-ec-ingress`.
+* **Automação de Logs:** Script PowerShell para simulação de eventos Syslog RFC-3164.
+* **Debug de Sistema:** `journalctl -u ariel_query_server`.
 
-Obs: Ainda não concluído 100%
+---
+
+## 📚 Conclusão e Aprendizados
+Este laboratório provou que a atuação em Cybersecurity vai além da ferramenta. Para garantir a integridade do monitoramento, foi necessário dominar administração Linux, protocolos de rede e engenharia de dados. A habilidade de converter falhas de infraestrutura em oportunidades para diagnóstico técnico é o que caracteriza a maturidade de um Analista de SOC.
+
+---
+*Projeto de estudo em Blue Team Operations.*
