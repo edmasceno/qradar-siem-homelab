@@ -4,7 +4,7 @@
 Este repositório registra a configuração de um ambiente de monitoramento utilizando o **IBM QRadar Community Edition**. O foco principal foi a resolução de questões críticas de infraestrutura, como a expiração de licenças em snapshots antigos, recuperação de serviços de banco de dados e ingestão de logs usando o PowerShell.
 
 ## 🧐 O que é o IBM QRadar?
-O **IBM QRadar** é uma das principais plataformas de SIEM (Gerenciamento e Análise de Eventos de Segurança) no mercado mundial. Sua função é atuar como o "cérebro" de um SOC (Centro de Operações de Segurança), reunindo, correlacionando e analisando milhões de eventos produzidos por dispositivos de rede, servidores e aplicativos em tempo real.
+Uma das principais plataformas de SIEM (Gerenciamento e Análise de Eventos de Segurança) no mercado mundial é o **IBM QRadar**. Sua função é atuar como o "cérebro" de um SOC (Centro de Operações de Segurança), reunindo, correlacionando e analisando milhões de eventos produzidos por dispositivos de rede, servidores e aplicativos em tempo real.
 
 ## 💻 Ambiente do laboratório
 * **SIEM:** Edição Comunitária do IBM QRadar v7.3.3 (CentOS 7).
@@ -62,7 +62,7 @@ Utilizei o comando `top` para monitorar a carga dos processos Java e a estabiliz
 ---
 
 ## 🚨 Etapa 4: Recuperação Crítica (Ariel e Banco de Dados)
-Hoje, encontrei um problema que impedia a visualização de logs: erro de conexão com o servidor de consulta.
+Identifiquei um problema que impedia a visualização de logs: erro de conexão com o servidor de consulta.
 
 * **Diagnóstico de Falha:** Utilizando o `journalctl`, constatei que o serviço `ariel_query_server` não conseguiu iniciar.
 * **Intervenção Manual:** Utilizei o `psql` para acessar o banco de dados e investigar as tabelas de sistema, além de analisar processos órfãos com o comando `ps aux | grep ariel`, a fim de forçar a restauração do serviço.
@@ -104,10 +104,10 @@ Logs "Unknown" foram padronizados. Empreguei o **DSM Editor** para desenvolver o
 Após a recuperação da infraestrutura e normalização dos logs, os eventos começaram a ser apresentados e reunidos em painéis de controle de monitoramento.
 
 ![Log Activity Real Time](assets/18.png)
-*Figura 15: Visualização dos registros processados em tempo real na aba Log Activity com filtro aplicado.*
+*Figura 15: Visualização dos registros processados em tempo real na aba Log Activity com o filtro de origem aplicado.*
 
 ![Recepção com Sucesso](assets/08_recepcao_log_sucesso.png)
-*Figura 16: Confirmação da normalização do evento customizado.*
+*Figura 16: Confirmação da normalização do evento customizado após o mapeamento de QID.*
 
 ![Saúde do Sistema](assets/07_final_log_activity.png)
 *Figura 17: Aba Log Activity processando métricas de saúde e eventos com sucesso.*
