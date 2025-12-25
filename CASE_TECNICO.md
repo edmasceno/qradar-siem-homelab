@@ -1,4 +1,3 @@
-# 📄 CASE_TECNICO.md  
 ## Recuperação e Estabilização de Ambiente SIEM (IBM QRadar)
 
 ---
